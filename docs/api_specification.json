@@ -1,0 +1,404 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Test Assignment for developer. API documentation",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://api-test/api/v1/",
+      "description": "API Test"
+    }
+  ],
+  "paths": {
+    "/token": {
+      "get": {
+        "summary": "Get token for user registration",
+        "tags": [
+          "Token"
+        ],
+        "responses": {
+          "200": {
+            "description": "Method returns a token that is required to register a new user. The token is valid for 40 minutes and can be used for only one request. For the next registration, you will need to get a new one.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "token": "d221a55b0f0245c9216ee89dec8269ab29c1531c384c1c37225b3810d1f60934"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "summary": "Returns users data from a database",
+        "tags": [
+          "Users"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "description": "Specify the page that you want to retrieve",
+            "example": 4
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "description": "Specify the missing record number",
+            "example": 3
+          },
+          {
+            "in": "query",
+            "name": "count",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 5
+            },
+            "description": "Specify the amount of items that will be retrieved per page"
+          }
+        ],
+        "description": "You can specify the parameters such as **count**, **offset** and **page**, which correspond to the number of users on the page, missing record number and page number. If you specify the **offset** parameter, the **page** parameter will be ignored.",
+        "responses": {
+          "200": {
+            "description": "Returns users data from a database divided into pages and sorted by creation date in the descending order.  To navigate through the pages, you can use the links in the servers response - **next_link** to go to the next page and **prev_link** to return to the previous page. If the next or previous page does not exist, the next_link/prev_link parameter will be set to null",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "page": 2,
+                  "total_pages": 46,
+                  "total_users": 46,
+                  "count": 1,
+                  "links": {
+                    "next_url": "http://api-test/api/v1/users?page=3&count=6",
+                    "prev_url": "http://api-test/api/v1/users?page=1&count=6"
+                  },
+                  "users": [
+                    {
+                      "id": "10",
+                      "name": "Aletha Krajcik Sr.",
+                      "email": "stroman.janiya@example.net",
+                      "phone": "+380627821049",
+                      "position": "Lawyer",
+                      "position_id": "4",
+                      "registration_timestamp": 1707135769,
+                      "photo": "http://api-test/images/users/5b977bafjnpbhqo.jpg"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Page not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "message": "Page not found"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "message": "Validation failed",
+                  "fails": {
+                    "count": [
+                      "The count must be an integer."
+                    ],
+                    "page": [
+                      "The page must be at least 1."
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "User registration request",
+        "tags": [
+          "Users"
+        ],
+        "parameters": [
+          {
+            "name": "Token",
+            "in": "header",
+            "required": true,
+            "description": "Token",
+            "schema": {
+              "type": "string"
+            },
+            "example": "d221a55b0f0245c9216ee89dec8269ab29c1531c384c1c37225b3810d1f60934"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "email",
+                  "phone",
+                  "position_id",
+                  "photo"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minimum": 2,
+                    "maximum": 60,
+                    "example": "John Doe"
+                  },
+                  "email": {
+                    "type": "string",
+                    "minimum": 2,
+                    "maximum": 100,
+                    "example": "john@example.com",
+                    "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+                  },
+                  "phone": {
+                    "type": "string",
+                    "example": "+380627821049",
+                    "pattern": "^[\\+]{0,1}380([0-9]{9})$",
+                    "description": "User phone number. Number should start with code of Ukraine +380"
+                  },
+                  "position_id": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "example": 1,
+                    "description": "User`s position id. You can get list of all positions with their IDs using the API method GET api/v1/positions"
+                  },
+                  "photo": {
+                    "type": "string",
+                    "format": "uri",
+                    "example": "http://api-test/images/users/5b977bafjnpbhqo.jpg",
+                    "description": "Minimum size of photo 70x70px. The photo format must be jpeg/jpg type. The photo size must not be greater than 5 Mb."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "New user successfully registered",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "user_id": 51,
+                  "message": "New user successfully registered"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The token expired.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "message": "The token expired."
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "User with this phone or email already exist",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "message": "User with this phone or email already exist"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "message": "Validation failed",
+                  "fails": {
+                    "name": [
+                      "The name must be at least 2 characters."
+                    ],
+                    "email": [
+                      "The email must be a valid email address."
+                    ],
+                    "phone": [
+                      "The phone field is required."
+                    ],
+                    "position_id": [
+                      "The position id must be an integer."
+                    ],
+                    "photo": [
+                      "The photo may not be greater than 5 Mbytes.",
+                      "Image is invalid."
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "summary": "Return information about user by his ID",
+        "tags": [
+          "Users"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the user",
+            "schema": {
+              "type": "integer"
+            },
+            "example": 8
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Get user by ID",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "user": {
+                    "id": 1,
+                    "name": "Aletha Krajcik Sr.",
+                    "email": "stroman.janiya@example.net",
+                    "phone": "+380627821049",
+                    "position": "Lawyer",
+                    "position_id": "4",
+                    "photo": "http://api-test/images/users/5b977bafjnpbhqo.jpg"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Page not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "message": "Page not found"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "message": "Validation failed",
+                  "fails": {
+                    "count": [
+                      "The count must be an integer."
+                    ],
+                    "page": [
+                      "The page must be at least 1."
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/positions": {
+      "get": {
+        "summary": "Returns a list of all available users positions",
+        "tags": [
+          "Positions"
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns a list of all available users positions.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "positions": [
+                    {
+                      "id": 1,
+                      "name": "Security"
+                    },
+                    {
+                      "id": 2,
+                      "name": "Designer"
+                    },
+                    {
+                      "id": 3,
+                      "name": "Content manager"
+                    },
+                    {
+                      "id": 4,
+                      "name": "Lawyer"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Page not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "message": "Page not found"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Positions not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "message": "Positions not found"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
