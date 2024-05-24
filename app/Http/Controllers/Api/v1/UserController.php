@@ -107,8 +107,12 @@ class UserController extends Controller
             'password' => '111',
         ];
         if (!Auth::attempt($credentials)) {
-            return 'The provided credentials do not match our records';
+            return response()
+                ->json([
+                    'message' => 'The provided credentials do not match our records'
+                ], 401);
         }
+
         $admin = Auth::user();
 
         $tokenHeader = $request->header('Token');
@@ -116,10 +120,10 @@ class UserController extends Controller
         if ($tokenHeader) {
             $urlToken = url(route('getToken'));
             $token = Http::get($urlToken)->json('token');
-            if (!($tokenHeader == $token)) {
+            if ($tokenHeader != $token) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'The token expired.'
+                    'message' => 'Token has expired'
                 ], 401);
             }
         }
@@ -128,7 +132,7 @@ class UserController extends Controller
         if (count($userIsUniq) != 0) {
             return response()->json([
                 'success' => false,
-                'message' => "User with this phone or email already exist"
+                'message' => "User with the same phone or email already exists"
             ], 409);
         }
 

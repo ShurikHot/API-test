@@ -14,7 +14,10 @@ class TokenController extends Controller
             'password' => '111',
         ];
         if (!Auth::attempt($credentials)) {
-            return 'The provided credentials do not match our records';
+            return response()
+                ->json([
+                    'message' => 'The provided credentials do not match our records'
+                ], 401);
         }
 
         $admin = Auth::user();
